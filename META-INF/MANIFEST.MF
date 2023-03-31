@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: de.leander.main.UserScript
+Class-Path: mysql-connector-j-8.0.32.jar protobuf-java-3.21.9.jar
+
