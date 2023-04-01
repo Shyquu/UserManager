@@ -15,6 +15,7 @@ public class MySQL {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             connection = DriverManager.getConnection("jdbc:mysql://" + UserScript.getAddress() + ":3306/" + UserScript.getDatabase(), UserScript.getUsername(), UserScript.getPassword());
+
         } catch (SQLException | ClassNotFoundException e) {
 
             throw new RuntimeException(e);
@@ -35,7 +36,11 @@ public class MySQL {
 
     public static void deleteDatabse(String tableName) {
         try {
-            UserScript.getConnection().createStatement().execute("DROP TABLE `" + tableName + "``");
+
+            PreparedStatement drop_stmt = UserScript.getConnection().prepareStatement("DROP TABLE ?");
+            drop_stmt.setString(1, tableName);
+            drop_stmt.execute();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -44,19 +49,32 @@ public class MySQL {
     public static void createUser(String user, String password, String address, String table) {
         try {
 
-            UserScript.getConnection().createStatement().execute("CREATE USER '" + user + "'@'" + address + "' IDENTIFIED BY '" + password + "'");
-            UserScript.getConnection().createStatement().execute("CREATE DATABASE IF NOT EXISTS `" + user + "-DB`");
-            UserScript.getConnection().createStatement().execute("GRANT ALL PRIVILEGES ON `" + user + "-DB`.* TO " + user + "@" + address + "");
-            PreparedStatement stmt = UserScript.getConnection().prepareStatement("INSERT INTO `" + table + "`(`username`, `password`, `databasename`) VALUES(?, ?, ?)");
-            stmt.setString(1, user);
-            stmt.setString(2, password);
-            stmt.setString(3, user + "-DB");
-            stmt.execute();
+            // PreparedStatement benutzen, damit man SQL immun gegen eine MITM-Attack macht
+
+            PreparedStatement user_stmt = UserScript.getConnection().prepareStatement("CREATE USER ?@'%' IDENTIFIED BY ?");
+            user_stmt.setString(1, user);
+            user_stmt.setString(2, password);
+            user_stmt.execute();
+
+            PreparedStatement database_stmt = UserScript.getConnection().prepareStatement("CREATE DATABASE IF NOT EXISTS ?");
+            database_stmt.setString(1, user + "-DB");
+            database_stmt.execute();
+
+            PreparedStatement grant_stmt = UserScript.getConnection().prepareStatement("GRANT ALL PRIVILEGES ON ?.* TO ?@?");
+            grant_stmt.setString(1, user + "-DB");
+            grant_stmt.setString(2, user);
+            grant_stmt.setString(3, address);
+            grant_stmt.execute();
+
+            PreparedStatement insert_stmt = UserScript.getConnection().prepareStatement("INSERT INTO ?(`username`, `password`, `databasename`) VALUES(?, ?, ?)");
+            insert_stmt.setString(1, table);
+            insert_stmt.setString(2, user);
+            insert_stmt.setString(3, password);
+            insert_stmt.setString(4, user + "-DB");
+            insert_stmt.execute();
 
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
     }
-
 }
-

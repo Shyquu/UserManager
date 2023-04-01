@@ -13,19 +13,11 @@ public class UserScript {
     static Connection connection;
     static String database, address, username, password, kurs, table;
     static Integer usercount;
-
-    public static String getKurs() {
-        return kurs;
-    }
-
-    public static void setKurs(String kurs) {
-        UserScript.kurs = kurs;
-    }
-
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
 
+        // -----------------------------------------------------------------------
         System.out.println("Bitte Adresse eingeben: ");
         setAddress(scanner.next());
         System.out.println("Adresse: " + getAddress());
@@ -38,14 +30,17 @@ public class UserScript {
         setUsername(scanner.next());
         System.out.println("Nutzernamen: " + getUsername());
 
-        System.out.println("Bitte Passwort waehlen: ");
+        System.out.println("Bitte Passwort eingeben: ");
         setPassword(scanner.next());
         System.out.println("Passwort: " + getPassword());
 
         // Verbindung mit der Datenbank aufbauen
+        // -----------------------------------------------------------------------
         connection = MySQL.connect();
         MySQL.setup();
         System.out.println("Verbindung mit der Datenbank hergestellt!");
+        // -----------------------------------------------------------------------
+        // Kriterien abfragen
 
         System.out.println("Wie viele Nutzer?: ");
         setUsercount(scanner.nextInt());
@@ -59,12 +54,24 @@ public class UserScript {
         setTable(scanner.next());
         System.out.println("Tabelle: " + getTable());
 
+        // -----------------------------------------------------------------------
+        // Nutzer erstellen
+
         for (int i=1; i<getUsercount()+1; i++) {
-            MySQL.createUser(kurs + new DecimalFormat("00").format(i), String.valueOf(new Random().nextInt(3)), getAddress(), getTable());
+            MySQL.createUser(kurs + new DecimalFormat("00").format(i), String.format("%04d", new Random().nextInt(10000)), getAddress(), getTable());
         }
+        // -----------------------------------------------------------------------
 
         System.out.println("Erfolgreich!");
 
+    }
+
+    public static String getKurs() {
+        return kurs;
+    }
+
+    public static void setKurs(String kurs) {
+        UserScript.kurs = kurs;
     }
 
     public static String getTable() {
@@ -82,7 +89,6 @@ public class UserScript {
     public static void setUsercount(Integer usercount) {
         UserScript.usercount = usercount;
     }
-
 
     public static Connection getConnection() {
         return connection;
